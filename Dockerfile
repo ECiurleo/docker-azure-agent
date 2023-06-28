@@ -1,33 +1,19 @@
 # Base image for x86-64 architecture
-FROM --platform=linux/amd64 ubuntu:latest
+FROM --platform=linux/amd64 docker:dind
 
 # Create a non-root user
-RUN groupadd -r appuser && useradd -r -g appuser -m appuser
+RUN addgroup -g 1001 appuser && adduser -u 1001 -G appuser -s /bin/sh -D appuser
 
 # Install dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apk add --no-cache \
     curl \
-    libunwind8 \
-    libssl-dev \
-    libicu-dev \
     jq \
     git \
-    iputils-ping \
-    libcurl4 \
-    libcurl3-gnutls \
-    libkrb5-3 \
-    zlib1g \
-    icu-devtools \
+    iputils \
+    nodejs \
+    npm \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Update ca-certificates
-RUN update-ca-certificates
-
-# Install Docker
-RUN curl -fsSL https://get.docker.com -o get-docker.sh \
-    && sh get-docker.sh \
-    && rm get-docker.sh
+    openssl
 
 # Set build arguments
 ARG AZP_URL
@@ -43,6 +29,8 @@ ENV AZP_URL=$AZP_URL
 ENV AZP_TOKEN=$AZP_TOKEN
 ENV AZP_POOL=$AZP_POOL
 ENV AZP_AGENT_NAME=$AZP_AGENT_NAME
+ENV NODE_VERSION=16
+ENV NODE_PACKAGE=node_16.x
 
 # Create agent directory
 RUN mkdir ${AGENT_DIR} && chown appuser:appuser ${AGENT_DIR}
@@ -65,10 +53,5 @@ RUN ./config.sh --unattended \
     --agent $AZP_AGENT_NAME \
     --acceptTeeEula
 
-# Start Docker daemon
-USER root
-CMD dockerd &
-
 # Start the Azure DevOps agent
-USER appuser
 CMD ["./run.sh"]

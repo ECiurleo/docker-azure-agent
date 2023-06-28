@@ -25,3 +25,6 @@ pool:
 #   vmImage: ubuntu-latest
 ```
 You can seemingly only choose one or the other.
+
+###   Agent version 
+Set at build time in the docker file. Will get updated by AzureDevOps
